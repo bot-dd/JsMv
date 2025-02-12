@@ -75,7 +75,7 @@ async def send_movie_updates(bot, file_name, caption, file_id):
         ]
         selected_poster = poster_url or random.choice(no_poster_images)
 
-        caption_message = f"#New_File_Added ✅\n\n● File Name: <code>{movie_name}</code>\n\n● Language: {language}\n\n● Quality: {quality}"
+        caption_message = f"#New_File_Added ✅\n\n● ꜰɪʟᴇ_ɴᴀᴍᴇ: <code>{movie_name}</code>\n\n● ʟᴀɴɢᴜᴀɢᴇ: {language}\n\n● Qᴜᴀʟɪᴛʏ: {quality}"
         search_movie = movie_name.replace(" ", '-')
         movie_update_channel = await db.movies_update_channel_id()
 
