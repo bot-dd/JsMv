@@ -115,7 +115,7 @@ User - {}"""
 © Powered By @RM_Movie_Flix</b>
 """
 
-    FILE_CAPTION = """<b>{file_name}\n\n𝖩𝗈𝗂𝗇➥ 「<a href="https://t.me/Rm_Movi">RM Movie Backup</a>」</b>"""
+    FILE_CAPTION = """<b><a href="https://t.me/RM_Movie_Flix">{filename}</a>\n\n〇 𝖩𝗈𝗂𝗇➥ 「<a href="https://t.me/Rm_Movi">RM Movie Backup</a>」</b>"""
     
 
     ALRT_TXT = """ᴊᴀʟᴅɪ ʏᴇʜᴀ sᴇ ʜᴀᴛᴏ !"""
