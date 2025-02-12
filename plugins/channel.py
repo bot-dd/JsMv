@@ -10,10 +10,9 @@ from database.ia_filterdb import save_file, unpack_new_file_id
 from utils import get_poster, temp
 import re
 from database.users_chats_db import db
+import random
 
 processed_movies = set()
-media_filter = filters.document | filters.video
-
 media_filter = filters.document | filters.video
 
 @Client.on_message(filters.chat(CHANNELS) & media_filter)
@@ -36,16 +35,20 @@ async def get_imdb(file_name):
     return None
     
 async def movie_name_format(file_name):
-  filename = re.sub(r'http\S+', '', re.sub(r'@\w+|#\w+', '', file_name).replace('_', ' ').replace('[', '').replace(']', '').replace('(', '').replace(')', '').replace('{', '').replace('}', '').replace('.', ' ').replace('@', '').replace(':', '').replace(';', '').replace("'", '').replace('-', '').replace('!', '')).strip()
-  return filename
+    filename = re.sub(r'http\S+', '', re.sub(r'@\w+|#\w+', '', file_name)
+                      .replace('_', ' ').replace('[', '').replace(']', '')
+                      .replace('(', '').replace(')', '').replace('{', '')
+                      .replace('}', '').replace('.', ' ').replace('@', '')
+                      .replace(':', '').replace(';', '').replace("'", '')
+                      .replace('-', '').replace('!', '')).strip()
+    return filename
 
 async def check_qualities(text, qualities: list):
     quality = []
     for q in qualities:
         if q in text:
-            quality.append(q)
-    quality = ", ".join(quality)
-    return quality[:-2] if quality.endswith(", ") else quality
+            quality.append(f"#{q}")  # Add '#' prefix
+    return ", ".join(quality) if quality else "#HDRip"
 
 async def send_movie_updates(bot, file_name, caption, file_id):
     try:
@@ -61,39 +64,53 @@ async def send_movie_updates(bot, file_name, caption, file_id):
             if season:
                 season = season.group(1) if season else None       
                 file_name = file_name[:file_name.find(season) + 1]
+                
         qualities = ["ORG", "org", "hdcam", "HDCAM", "HQ", "hq", "HDRip", "hdrip", 
-                     "camrip", "WEB-DL" "CAMRip", "hdtc", "predvd", "DVDscr", "dvdscr", 
-                     "dvdrip", "dvdscr", "HDTC", "dvdscreen", "HDTS", "hdts"]
-        quality = await check_qualities(caption, qualities) or "HDRip"
-        language = ""
-        nb_languages = ["Hindi", "Bengali", "English", "Marathi", "Tamil", "Telugu", "Malayalam", "Kannada", "Punjabi", "Gujrati", "Korean", "Japanese", "Bhojpuri", "Dual", "Multi"]    
-        for lang in nb_languages:
-            if lang.lower() in caption.lower():
-                language += f"{lang}, "
-        language = language.strip(", ") or "Not Idea"
+                     "camrip", "WEB-DL", "CAMRip", "hdtc", "predvd", "DVDscr", 
+                     "dvdscr", "dvdrip", "HDTC", "dvdscreen", "HDTS", "hdts"]
+        quality = await check_qualities(caption, qualities)
+
+        nb_languages = ["Hindi", "Bengali", "English", "Marathi", "Tamil", "Telugu",
+                        "Malayalam", "Kannada", "Punjabi", "Gujrati", "Korean",
+                        "Japanese", "Bhojpuri", "Dual", "Multi"]    
+        language = ", ".join([f"#{lang}" for lang in nb_languages if lang.lower() in caption.lower()])
+        language = language or "#Not_Idea"
+        
         movie_name = await movie_name_format(file_name)    
         if movie_name in processed_movies:
             return 
         processed_movies.add(movie_name)    
+        
         poster_url = await get_imdb(movie_name)
-        caption_message = f"#New_File_Added ✅\n\nFile_Name:- <code>{movie_name}</code>\n\nLanguage:- {language}\n\nQuality:- {quality}" 
+
+        caption_message = (f"#New_File_Added ✅\n\n"
+                           f"🎬 **File Name:** <code>{movie_name}</code>\n"
+                           f"🗣️ **Language:** {language}\n"
+                           f"💿 **Quality:** {quality}") 
+        
         search_movie = movie_name.replace(" ", '-')
         movie_update_channel = await db.movies_update_channel_id()    
+
         btn = [[
-            InlineKeyboardButton('📂 ɢᴇᴛ ғɪʟᴇ 📂', url=f'https://telegram.me/{temp.U_NAME}?start=getfile-{search_movie}')
+            InlineKeyboardButton('📂 Get File 📂', url=f'https://telegram.me/{temp.U_NAME}?start=getfile-{search_movie}')
         ],[
-            InlineKeyboardButton('♻️ ʜᴏᴡ ᴛᴏ ᴅᴏᴡɴʟᴏᴀᴅ ♻️', url=f'https://t.me/JISSHU_BOTS')
+            InlineKeyboardButton('♻️ How To Download ♻️', url='https://t.me/Rm_Movi')
         ]]
         reply_markup = InlineKeyboardMarkup(btn)
+
+        no_poster_images = [
+            "https://envs.sh/xQ.jpg",
+            "",
+            ""
+        ]
+        
         if poster_url:
             await bot.send_photo(movie_update_channel if movie_update_channel else MOVIE_UPDATE_CHANNEL, 
                                  photo=poster_url, caption=caption_message, reply_markup=reply_markup)
         else:
-            no_poster = "https://telegra.ph/file/88d845b4f8a024a71465d.jpg"
+            random_poster = random.choice(no_poster_images)
             await bot.send_photo(movie_update_channel if movie_update_channel else MOVIE_UPDATE_CHANNEL, 
-                                 photo=no_poster, caption=caption_message, reply_markup=reply_markup)  
+                                 photo=random_poster, caption=caption_message, reply_markup=reply_markup)  
     except Exception as e:
         print('Failed to send movie update. Error - ', e)
         await bot.send_message(LOG_CHANNEL, f'Failed to send movie update. Error - {e}')
-    
-  
