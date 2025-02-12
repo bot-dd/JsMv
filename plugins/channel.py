@@ -100,8 +100,8 @@ async def send_movie_updates(bot, file_name, caption, file_id):
 
         no_poster_images = [
             "https://envs.sh/xQ.jpg",
-            "",
-            ""
+            "https://envs.sh/xt.jpg",
+            "https://envs.sh/xF.jpg"
         ]
         
         if poster_url:
