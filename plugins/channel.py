@@ -69,20 +69,20 @@ async def send_movie_updates(bot, file_name, caption, file_id):
 
         poster_url = await get_imdb(movie_name)
         no_poster_images = [
-            "https://telegra.ph/file/88d845b4f8a024a71465d.jpg",
-            "https://telegra.ph/file/7a42cce7e5c2c62b12f2e.jpg",
-            "https://telegra.ph/file/5dbe2f68dc3b5a78b3355.jpg"
+            "https://envs.sh/xF.jpg",
+            "https://envs.sh/xQ.jpg",
+            "https://envs.sh/xt.jpg"
         ]
         selected_poster = poster_url or random.choice(no_poster_images)
 
-        caption_message = f"#New_File_Added ✅\n\nFile Name: <code>{movie_name}</code>\n\nLanguage: {language}\n\nQuality: {quality}"
+        caption_message = f"#New_File_Added ✅\n\n● File Name: <code>{movie_name}</code>\n\n● Language: {language}\n\n● Quality: {quality}"
         search_movie = movie_name.replace(" ", '-')
         movie_update_channel = await db.movies_update_channel_id()
 
         btn = [[
             InlineKeyboardButton('📂 Get File 📂', url=f'https://telegram.me/{temp.U_NAME}?start=getfile-{search_movie}')
         ], [
-            InlineKeyboardButton('♻️ How To Download ♻️', url='https://t.me/JISSHU_BOTS')
+            InlineKeyboardButton('♻️ How To Download ♻️', url='https://t.me/RM_Movi')
         ]]
         reply_markup = InlineKeyboardMarkup(btn)
 
