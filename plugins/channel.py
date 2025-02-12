@@ -1,8 +1,3 @@
-# Credit - JISSHU BOTS
-# Modified By NBBotz
-# Some Codes Are Taken From A GitHub Repository And We Forgot His Name
-# Base Code Bishal
-
 from pyrogram import Client, filters
 from pyrogram.types import InlineKeyboardMarkup, InlineKeyboardButton
 from info import CHANNELS, MOVIE_UPDATE_CHANNEL, ADMINS , LOG_CHANNEL
@@ -33,21 +28,19 @@ async def get_imdb(file_name):
     if imdb:
         return imdb.get('poster')
     return None
-    
+
 async def movie_name_format(file_name):
-    filename = re.sub(r'http\S+', '', re.sub(r'@\w+|#\w+', '', file_name)
-                      .replace('_', ' ').replace('[', '').replace(']', '')
-                      .replace('(', '').replace(')', '').replace('{', '')
-                      .replace('}', '').replace('.', ' ').replace('@', '')
-                      .replace(':', '').replace(';', '').replace("'", '')
-                      .replace('-', '').replace('!', '')).strip()
-    return filename
+    # @, [], {}, () এগুলোর মধ্যে থাকা টেক্সট বাদ দেওয়া হচ্ছে
+    file_name = re.sub(r'@\S+|\[.*?\]|\(.*?\)|\{.*?\}', '', file_name)
+    file_name = re.sub(r'http\S+', '', file_name).replace('_', ' ').replace('.', ' ')
+    file_name = re.sub(r'[^a-zA-Z0-9\s]', '', file_name).strip()
+    return file_name
 
 async def check_qualities(text, qualities: list):
     quality = []
     for q in qualities:
-        if q in text:
-            quality.append(f"#{q}")  # Add '#' prefix
+        if q.lower() in text.lower():
+            quality.append(f"#{q}")
     return ", ".join(quality) if quality else "#HDRip"
 
 async def send_movie_updates(bot, file_name, caption, file_id):
@@ -55,62 +48,47 @@ async def send_movie_updates(bot, file_name, caption, file_id):
         year_match = re.search(r"\b(19|20)\d{2}\b", caption)
         year = year_match.group(0) if year_match else None      
         pattern = r"(?i)(?:s|season)0*(\d{1,2})"
-        season = re.search(pattern, caption)
-        if not season:
-            season = re.search(pattern, file_name) 
+        season = re.search(pattern, caption) or re.search(pattern, file_name)
+        
         if year:
             file_name = file_name[:file_name.find(year) + 4]      
-        if not year:
-            if season:
-                season = season.group(1) if season else None       
-                file_name = file_name[:file_name.find(season) + 1]
-                
-        qualities = ["ORG", "org", "hdcam", "HDCAM", "HQ", "hq", "HDRip", "hdrip", 
-                     "camrip", "WEB-DL", "CAMRip", "hdtc", "predvd", "DVDscr", 
-                     "dvdscr", "dvdrip", "HDTC", "dvdscreen", "HDTS", "hdts"]
+        elif season:
+            file_name = file_name[:file_name.find(season.group(1)) + 1]
+
+        qualities = ["ORG", "HDCAM", "HQ", "HDRip", "CAMRip", "WEB-DL", "HDTC", "DVDscr", "HDTS"]
         quality = await check_qualities(caption, qualities)
 
-        nb_languages = ["Hindi", "Bengali", "English", "Marathi", "Tamil", "Telugu",
-                        "Malayalam", "Kannada", "Punjabi", "Gujrati", "Korean",
-                        "Japanese", "Bhojpuri", "Dual", "Multi"]    
-        language = ", ".join([f"#{lang}" for lang in nb_languages if lang.lower() in caption.lower()])
-        language = language or "#Not_Idea"
-        
-        movie_name = await movie_name_format(file_name)    
+        nb_languages = ["Hindi", "Bengali", "English", "Marathi", "Tamil", "Telugu", "Malayalam", 
+                        "Kannada", "Punjabi", "Gujarati", "Korean", "Japanese", "Bhojpuri", "Dual", "Multi"]
+        language = ", ".join([f"#{lang}" for lang in nb_languages if lang.lower() in caption.lower()]) or "#NotIdea"
+
+        movie_name = await movie_name_format(file_name)
         if movie_name in processed_movies:
             return 
         processed_movies.add(movie_name)    
-        
-        poster_url = await get_imdb(movie_name)
 
-        caption_message = (f"#New_File_Added ✅\n\n"
-                           f"🎬 **File Name:** <code>{movie_name}</code>\n"
-                           f"🗣️ **Language:** {language}\n"
-                           f"💿 **Quality:** {quality}") 
-        
+        poster_url = await get_imdb(movie_name)
+        no_poster_images = [
+            "https://telegra.ph/file/88d845b4f8a024a71465d.jpg",
+            "https://telegra.ph/file/7a42cce7e5c2c62b12f2e.jpg",
+            "https://telegra.ph/file/5dbe2f68dc3b5a78b3355.jpg"
+        ]
+        selected_poster = poster_url or random.choice(no_poster_images)
+
+        caption_message = f"#New_File_Added ✅\n\nFile Name: <code>{movie_name}</code>\n\nLanguage: {language}\n\nQuality: {quality}"
         search_movie = movie_name.replace(" ", '-')
-        movie_update_channel = await db.movies_update_channel_id()    
+        movie_update_channel = await db.movies_update_channel_id()
 
         btn = [[
             InlineKeyboardButton('📂 Get File 📂', url=f'https://telegram.me/{temp.U_NAME}?start=getfile-{search_movie}')
-        ],[
-            InlineKeyboardButton('♻️ How To Download ♻️', url='https://t.me/Rm_Movi')
+        ], [
+            InlineKeyboardButton('♻️ How To Download ♻️', url='https://t.me/JISSHU_BOTS')
         ]]
         reply_markup = InlineKeyboardMarkup(btn)
 
-        no_poster_images = [
-            "https://envs.sh/xQ.jpg",
-            "https://envs.sh/xt.jpg",
-            "https://envs.sh/xF.jpg"
-        ]
-        
-        if poster_url:
-            await bot.send_photo(movie_update_channel if movie_update_channel else MOVIE_UPDATE_CHANNEL, 
-                                 photo=poster_url, caption=caption_message, reply_markup=reply_markup)
-        else:
-            random_poster = random.choice(no_poster_images)
-            await bot.send_photo(movie_update_channel if movie_update_channel else MOVIE_UPDATE_CHANNEL, 
-                                 photo=random_poster, caption=caption_message, reply_markup=reply_markup)  
+        await bot.send_photo(movie_update_channel if movie_update_channel else MOVIE_UPDATE_CHANNEL, 
+                             photo=selected_poster, caption=caption_message, reply_markup=reply_markup)
+
     except Exception as e:
         print('Failed to send movie update. Error - ', e)
         await bot.send_message(LOG_CHANNEL, f'Failed to send movie update. Error - {e}')
