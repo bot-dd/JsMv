@@ -107,15 +107,14 @@ User - {}"""
 🎁 ʀᴇǫᴜᴇꜱᴛ ᴍꜱɢ - <code>{}</code></b>"""  
    
     IMDB_TEMPLATE_TXT = """
-<b>🍿 Title: {title}
-🎃 Genres: {genres}
-📆 Year: {release_date}
-⭐ Rating: {rating} / 10
-
-© Powered By @RM_Movie_Flix</b>
+<b>🍿 Title: {title} [{year}]
+🗣️ Language : #{languages}
+🎭 Genres: #{genres}
+🌟 Rating: {rating} / 10
+<blockquote>✹ Powered By @RM_Movie_Flix</blockquote></b>
 """
 
-    FILE_CAPTION = """<b><a href="https://t.me/RM_Movie_Flix">{filename}</a>\n\n〇 𝖩𝗈𝗂𝗇➥ 「<a href="https://t.me/Rm_Movi">RM Movie Backup</a>」</b>"""
+    FILE_CAPTION = """<b>@RM_Movie_Flix {file_name}\n\n𝖩𝗈𝗂𝗇➥ 「<a href="https://t.me/Rm_Movi">𝑹𝑴 𝑴𝒐𝒗𝒊𝒆 𝑭𝒍𝒊𝒙 𝑩𝒂𝒄𝒌𝒖𝒑</a>」</b>"""
     
 
     ALRT_TXT = """ᴊᴀʟᴅɪ ʏᴇʜᴀ sᴇ ʜᴀᴛᴏ !"""
