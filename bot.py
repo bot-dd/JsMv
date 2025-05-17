@@ -4,56 +4,72 @@ import importlib
 from pathlib import Path
 import logging
 import logging.config
-from datetime import date, datetime
-from typing import Union, Optional, AsyncGenerator
-
 import asyncio
-import pytz
-import pyrogram.utils
-from aiohttp import web
-from pyrogram import Client, __version__, types, idle
-from pyrogram.raw.all import layer
 
+# Pyrogram related
+from pyrogram import Client, __version__, idle
+from pyrogram.raw.all import layer
+import pyrogram.utils
+
+# aiohttp for health check
+from aiohttp import web
+
+# Project-specific imports
 from database.ia_filterdb import Media
 from database.users_chats_db import db
 from info import *
 from utils import temp
-from Script import script
-from plugins import web_server
+from Script import script 
 from Jisshu.bot import JisshuBot
 from Jisshu.util.keepalive import ping_server
 from Jisshu.bot.clients import initialize_clients
 
-from subtr import include_handlers  # <-- নতুন Import
+# Time
+from datetime import date, datetime 
+import pytz
 
-# Logging Config
-logging.config.fileConfig('logging.conf')
+# Telegram Bot (python-telegram-bot)
+from telegram.ext import ApplicationBuilder, CommandHandler, MessageHandler, filters
+from features.subtitle import subtr, handle_sub
+
+# Configure Logging
+logging.config.fileConfig('logging.conf', disable_existing_loggers=False)
 logging.getLogger().setLevel(logging.INFO)
 logging.getLogger("pyrogram").setLevel(logging.ERROR)
 logging.getLogger("imdbpy").setLevel(logging.ERROR)
-logging.basicConfig(
-    level=logging.INFO,
-    format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
-)
 logging.getLogger("aiohttp").setLevel(logging.ERROR)
 logging.getLogger("aiohttp.web").setLevel(logging.ERROR)
 
-# Load all plugins
-ppath = "plugins/*.py"
-files = glob.glob(ppath)
-JisshuBot.start()
-loop = asyncio.get_event_loop()
-
-# Set MIN_CHANNEL_ID
+# Force channel ID range
 pyrogram.utils.MIN_CHANNEL_ID = -1009147483647
 
+# Plugin Loader
+ppath = "plugins/*.py"
+files = glob.glob(ppath)
+
+# Telegram Bot Token (python-telegram-bot)
+BOT_TOKEN = "YOUR_BOT_TOKEN"
+
+# Telegram.Bot (telegram.ext) Runner
+async def run_telegram_ext_bot():
+    application = ApplicationBuilder().token(BOT_TOKEN).build()
+    application.add_handler(CommandHandler("subtr", subtr))
+    application.add_handler(MessageHandler(filters.Document.ALL, handle_sub))
+    print("Telegram.ext Bot is running...")
+    await application.initialize()
+    await application.start()
+    await application.updater.start_polling()
+    return application
+
+# Pyrogram-based Bot Runner
 async def Jisshu_start():
-    print('\n')
-    print('Initalizing Jisshu Filter Bot')
+    print('\nInitalizing Jisshu Filter Bot...')
+    await JisshuBot.start()
     bot_info = await JisshuBot.get_me()
     JisshuBot.username = bot_info.username
     await initialize_clients()
 
+    # Load all plugins
     for name in files:
         with open(name) as a:
             patt = Path(a.name)
@@ -64,7 +80,7 @@ async def Jisshu_start():
             load = importlib.util.module_from_spec(spec)
             spec.loader.exec_module(load)
             sys.modules["plugins." + plugin_name] = load
-            print("Jisshu Filter Bot Imported => " + plugin_name)
+            print("Imported Plugin => " + plugin_name)
 
     if ON_HEROKU:
         asyncio.create_task(ping_server())
@@ -81,32 +97,34 @@ async def Jisshu_start():
     temp.B_LINK = me.mention
     JisshuBot.username = '@' + me.username
 
-    logging.info(f"{me.first_name} with for Pyrogram v{__version__} (Layer {layer}) started on {me.username}.")
+    logging.info(f"{me.first_name} | Pyrogram v{__version__} (Layer {layer}) started on {me.username}.")
     logging.info(script.LOGO)
 
+    # Send Restart Notifications
     tz = pytz.timezone('Asia/Kolkata')
-    today = date.today()
     now = datetime.now(tz)
     time = now.strftime("%H:%M:%S %p")
-
+    today = date.today()
     await JisshuBot.send_message(chat_id=LOG_CHANNEL, text=script.RESTART_TXT.format(me.mention, today, time))
-    await JisshuBot.send_message(chat_id=SUPPORT_GROUP, text=f"<b>{me.mention} ʀᴇsᴛᴀʀᴛᴇᴅ 🤖</b>")
+    await JisshuBot.send_message(chat_id=SUPPORT_GROUP, text=f"<b>{me.mention} restarted 🤖</b>")
 
-    # Setup web server
-    app = await web_server()
-    include_handlers(app)  # <-- এখানে include_handlers কল করা হয়েছে
-    runner = web.AppRunner(app)
-    await runner.setup()
-    bind_address = "0.0.0.0"
-    await web.TCPSite(runner, bind_address, PORT).start()
+    # Run healthcheck server
+    app = web.AppRunner(await web_server())
+    await app.setup()
+    await web.TCPSite(app, "0.0.0.0", PORT).start()
+
+    # Start telegram.ext bot (subtr)
+    await run_telegram_ext_bot()
 
     await idle()
 
+    # Notify Admins
     for admin in ADMINS:
-        await JisshuBot.send_message(chat_id=admin, text=f"<b>{me.mention} ʙᴏᴛ ʀᴇsᴛᴀʀᴛᴇᴅ ✅</b>")
+        await JisshuBot.send_message(chat_id=admin, text=f"<b>{me.mention} bot restarted ✅</b>")
 
 
 if __name__ == '__main__':
+    loop = asyncio.get_event_loop()
     try:
         loop.run_until_complete(Jisshu_start())
     except KeyboardInterrupt:
