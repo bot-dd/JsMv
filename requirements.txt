@@ -1,8 +1,8 @@
+deep-translator==1.11.4
 webvtt-py
 pysubs2
 langdetect
 python-telegram-bot==20.8
-deep-translator==1.9.1
 pyrofork==2.3.45
 tgcrypto 
 pymongo==4.8.0 
