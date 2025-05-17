@@ -109,7 +109,7 @@ async def Jisshu_start():
     await JisshuBot.send_message(chat_id=SUPPORT_GROUP, text=f"<b>{me.mention} restarted 🤖</b>")
 
     # Run healthcheck server
-    app = web.AppRunner(await web_server())
+    app = web.AppRunner(await ping_server())
     await app.setup()
     await web.TCPSite(app, "0.0.0.0", PORT).start()
 
