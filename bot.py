@@ -2,6 +2,8 @@ import sys
 import glob
 import importlib
 from commands import subtr
+from subtr import include_handlers
+include_handlers(app)
 from pathlib import Path
 from pyrogram import idle
 import logging
